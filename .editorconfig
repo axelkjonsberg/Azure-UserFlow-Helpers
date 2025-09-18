@@ -1,0 +1,45 @@
+root = true
+
+[*.{cs,csproj}]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+
+# .NET code style
+dotnet_style_qualification_for_field = true:suggestion
+dotnet_style_qualification_for_property = true:suggestion
+dotnet_style_qualification_for_method = false:suggestion
+dotnet_style_require_accessibility_modifiers = always:suggestion
+
+# Roslyn (VS / dotnet format): allow single-line 'if' without braces,
+# but still add braces when a block goes multiline.
+csharp_prefer_braces = when_multiline:suggestion
+# keep one-liners as one line unless style says otherwise
+csharp_preserve_single_line_statements = true
+csharp_preserve_single_line_blocks = true
+
+# ReSharper/Rider: per-statement "Add braces" suggestions
+resharper_enforce_for_statement_braces_highlighting = warning
+resharper_enforce_foreach_statement_braces_highlighting = warning
+resharper_enforce_while_statement_braces_highlighting = warning
+resharper_enforce_using_statement_braces_highlighting = warning
+resharper_enforce_lock_statement_braces_highlighting = warning
+resharper_enforce_fixed_statement_braces_highlighting = warning
+
+# Let single-line 'if' pass
+resharper_enforce_if_statement_braces_highlighting = do_not_show
+
+# Naming: private fields _camelCase
+dotnet_naming_rule.private_fields_should_be_camel_with_underscore.severity = suggestion
+dotnet_naming_rule.private_fields_should_be_camel_with_underscore.symbols = private_fields
+dotnet_naming_rule.private_fields_should_be_camel_with_underscore.style = camel_with_underscore
+dotnet_naming_symbols.private_fields.applicable_kinds = field
+dotnet_naming_symbols.private_fields.applicable_accessibilities = private
+dotnet_naming_style.camel_with_underscore.required_prefix = _
+dotnet_naming_style.camel_with_underscore.capitalization = camel_case
+
+# Treat analyzer suggestions as warnings in CI
+dotnet_analyzer_diagnostic.category-Style.severity = warning
+dotnet_analyzer_diagnostic.category-CodeQuality.severity = warning

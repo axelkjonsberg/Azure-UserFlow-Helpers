@@ -1,0 +1,14 @@
+* text=auto eol=lf
+
+# Windows batch files must stay CRLF on checkout
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Don’t diff/merge common binaries
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.pdf binary
+*.zip binary
+*.snk binary

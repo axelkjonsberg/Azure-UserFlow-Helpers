@@ -1,5 +1,24 @@
+# Build output
 bin/
 obj/
-/packages/
-riderModule.iml
-/_ReSharper.Caches/
+artifacts/
+*.nupkg
+*.snupkg
+
+# Visual Studio
+.vs/
+
+# Rider / IntelliJ
+.idea/
+
+# VS Code
+.vscode/
+
+# User
+*.user
+*.suo
+*.rsuser
+
+# OS
+.DS_Store
+Thumbs.db
