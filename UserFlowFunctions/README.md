@@ -1,8 +1,8 @@
-# UserFlowHelpers
+# UserFlow.Helpers
 
 Helpers for Microsoft Entra External ID custom authentication extensions and Azure AD B2C API Connectors.
 
-## THIS PACKAGE IS IN PREVIEW STATE; EXPECT CHANGES
+## ⚠️ THIS PACKAGE IS IN PREVIEW STATE; EXPECT IT TO CHANGE
 
 ---
 
