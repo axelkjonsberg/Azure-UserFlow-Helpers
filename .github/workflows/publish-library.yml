@@ -24,7 +24,7 @@ jobs:
       - name: Pack (use tag as version)
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          dotnet pack UserFlowFunctions/UserFlowFunctions.csproj -c Release --no-build -o ./artifacts \
+          dotnet pack UserFlow.Helpers/UserFlow.Helpers.csproj -c Release --no-build -o ./artifacts \
             -p:PackageVersion="$VERSION" -p:Version="$VERSION" -p:ContinuousIntegrationBuild=true
       - name: Push to NuGet
         env:

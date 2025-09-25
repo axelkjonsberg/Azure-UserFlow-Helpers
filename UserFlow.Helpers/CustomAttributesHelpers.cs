@@ -1,7 +1,7 @@
 ﻿using System.Text.RegularExpressions;
 using JetBrains.Annotations;
 
-namespace UserFlowFunctions;
+namespace UserFlow.Helpers;
 
 /// <summary>
 /// Helpers for directory-extension claim keys:

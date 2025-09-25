@@ -2,12 +2,12 @@
     <PropertyGroup>
         <!-- NuGet metadata -->
         <PackageId>AxelKjonsberg.AzureUserFlow.Templates</PackageId>
+        <Title>Azure UserFlow Templates</Title>
         <Version>0.1.0</Version>
-        <Title>AzureUserFlow Templates</Title>
         <Authors>Axel M Kjønsberg</Authors>
         <Description>Templates for using Entra External ID UserFlowExtensions or B2C API Connectors.</Description>
         <PackageTags>dotnet-new;templates;azure-functions</PackageTags>
-        <PackageProjectUrl>https://example.com/your-repo</PackageProjectUrl>
+        <PackageProjectUrl>https://github.com/axelkjonsberg/Azure-UserFlow-Helpers</PackageProjectUrl>
 
         <!-- Template package settings -->
         <PackageType>Template</PackageType>
@@ -18,8 +18,7 @@
         <NoWarn>$(NoWarn);NU5128</NoWarn>
         <NoDefaultExcludes>true</NoDefaultExcludes>
         <PackageReadmeFile>README.md</PackageReadmeFile>
-
-        <!--(typical for template packs) -->
+        
         <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
     </PropertyGroup>
 

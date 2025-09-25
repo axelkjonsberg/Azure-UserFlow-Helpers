@@ -3,7 +3,7 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using NSubstitute;
 
-namespace UserFlowFunctions.Tests.Fakes;
+namespace UserFlow.Helpers.Tests.Fakes;
 
 internal static class HttpFakes
 {

@@ -2,7 +2,7 @@
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 
-namespace UserFlowFunctions.Tests.Fakes;
+namespace UserFlow.Helpers.Tests.Fakes;
 
 public sealed class TestHttpResponseData(FunctionContext functionContext) : HttpResponseData(functionContext)
 {
@@ -20,12 +20,12 @@ public sealed class TestHttpResponseData(FunctionContext functionContext) : Http
         public override void Append(string name, string value)
         {
             var httpCookie = CreateNew();
-            _cookies.Add(httpCookie);
+            this._cookies.Add(httpCookie);
         }
 
         public override void Append(IHttpCookie cookie)
         {
-            _cookies.Add(cookie);
+            this._cookies.Add(cookie);
         }
 
         public override IHttpCookie CreateNew()

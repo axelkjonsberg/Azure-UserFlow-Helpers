@@ -1,10 +1,10 @@
 {
   "$schema": "http://json.schemastore.org/template",
-  "identity": "UserFlowFunctions.Templates.ApiConnector",
+  "identity": "AxelKjonsberg.AzureUserFlow.Templates.ApiConnector",
   "name": "Azure Functions (isolated) – B2C API Connector",
   "shortName": "b2c-apiconnector",
   "sourceName": "ApiConnector",
-  "author": "",
+  "author": "Axel M. Kjønsberg",
   "classifications": [ "Azure", "Functions", "B2C" ],
   "preferNameDirectory": true,
   "tags": {
@@ -12,19 +12,17 @@
     "language": "C#"
   },
   "symbols": {
-    "UserFlowFunctionsPackageId": {
+    "UserFlowHelpersPackageId": {
       "type": "parameter",
       "datatype": "text",
-      "replaces": "[[UserFlowFunctionsPackageId]]",
-      "defaultValue": "UserFlowFunctions",
-      "description": "NuGet package id of the helpers library"
+      "replaces": "[[UserFlowHelpersPackageId]]",
+      "defaultValue": "AxelKjonsberg.AzureUserFlow.Helpers"
     },
-    "UserFlowFunctionsVersion": {
+    "UserFlowHelpersVersion": {
       "type": "parameter",
       "datatype": "text",
-      "replaces": "[[UserFlowFunctionsVersion]]",
-      "defaultValue": "0.0.0",
-      "description": "Pinned version of the helpers library"
+      "replaces": "[[UserFlowHelpersVersion]]",
+      "defaultValue": "0.1.0-beta.1"
     }
   },
   "primaryOutputs": [

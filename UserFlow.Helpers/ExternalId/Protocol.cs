@@ -1,6 +1,6 @@
 using JetBrains.Annotations;
 
-namespace UserFlowFunctions.ExternalId;
+namespace UserFlow.Helpers.ExternalId;
 
 /// <summary>
 /// Well-known JSON property names and <c>@odata.type</c> discriminator values

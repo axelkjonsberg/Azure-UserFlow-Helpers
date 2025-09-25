@@ -24,25 +24,22 @@ jobs:
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq
 
-      - name: Resolve latest published UserFlowFunctions version
+      - name: Resolve latest published UserFlow.Helpers version
         run: |
-          LIB_ID="UserFlowFunctions"
-          INDEX_URL="https://api.nuget.org/v3-flatcontainer/${LIB_ID,,}/index.json"
-          LIB_VER=$(curl -sSL "$INDEX_URL" | jq -r '.versions | map(select(contains("-")|not)) | last')
-          echo "LIB_VER=$LIB_VER"
-          echo "LIB_VER=$LIB_VER" >> $GITHUB_ENV
-        # nuget v3 base address docs: api.nuget.org/v3, flatcontainer index lists versions
-        # https://api.nuget.org/v3/index.json → base resources
-        # https://api.nuget.org/v3-flatcontainer/{id}/index.json lists versions
+          helpers_id="AxelKjonsberg.AzureUserFlow.Helpers"
+          index_url="https://api.nuget.org/v3-flatcontainer/${helpers_id,,}/index.json"
+          all_versions=$(curl -sSL "$index_url" | jq -r '.versions')
+          stable_version=$(jq -r 'map(select(contains("-")|not)) | last // empty' <<<"$all_versions")
+          helpers_version="${stable_version:-$(jq -r 'last' <<<"$all_versions")}"
+          echo "HELPERS_VERSION=$helpers_version" >> "$GITHUB_ENV"
 
-      - name: Use UserFlowFunctions package version and ID in the template config
+      - name: Use UserFlow.Helpers package version and ID in the template config
         run: |
-          TPL=templates/UserFlowFunctions.Templates/content/ApiConnector/.template.config/template.json
-          jq --arg v "${LIB_VER}" \
-             --arg id "UserFlowFunctions" \
-             '.symbols.UserFlowFunctionsVersion.defaultValue = $v
-              | .symbols.UserFlowFunctionsPackageId.defaultValue = $id' \
-             "$TPL" > "$TPL.tmp" && mv "$TPL.tmp" "$TPL"
+          tpl="templates/UserFlow.Templates/content/ApiConnector/.template.config/template.json"
+          jq --arg id "$helpers_id" --arg v "$helpers_version" \
+          '.symbols.UserFlowHelpersPackageId.defaultValue = $id
+          | .symbols.UserFlowHelpersVersion.defaultValue = $v' \
+          "$tpl" > "$tpl.tmp" && mv "$tpl.tmp" "$tpl"
 
       - run: dotnet restore
       - run: dotnet build -c Release --no-restore /p:ContinuousIntegrationBuild=true
@@ -50,7 +47,7 @@ jobs:
       - name: Pack template (use tag as version)
         run: |
           VERSION="${GITHUB_REF_NAME#templates-v}"
-          dotnet pack templates/UserFlowFunctions.Templates/UserFlowFunctions.Templates.csproj \
+          dotnet pack templates/UserFlow.Templates/UserFlow.Templates.csproj \
             -c Release -o ./artifacts /p:PackageVersion="$VERSION" /p:ContinuousIntegrationBuild=true
 
       - name: Smoke test – install template nupkg and build a project

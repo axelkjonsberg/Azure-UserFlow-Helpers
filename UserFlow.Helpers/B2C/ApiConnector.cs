@@ -4,7 +4,7 @@ using System.Net;
 using System.Text.Json;
 using Microsoft.Azure.Functions.Worker.Http;
 
-namespace UserFlowFunctions.B2C;
+namespace UserFlow.Helpers.B2C;
 
 /// <summary>
 /// Helpers for Azure AD B2C API Connector responses.

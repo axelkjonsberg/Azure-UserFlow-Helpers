@@ -1,5 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
+        <RootNamespace>UserFlow.Helpers.Tests</RootNamespace>
         <IsTestProject>true</IsTestProject>
         <TargetFramework>net8.0</TargetFramework>
         <Nullable>enable</Nullable>
@@ -7,6 +8,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\UserFlowFunctions\UserFlowFunctions.csproj" />
+        <ProjectReference Include="..\UserFlow.Helpers\UserFlow.Helpers.csproj" />
     </ItemGroup>
 </Project>

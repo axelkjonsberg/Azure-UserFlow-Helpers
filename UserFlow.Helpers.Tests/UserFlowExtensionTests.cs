@@ -1,9 +1,9 @@
 ﻿using System.Net;
 using System.Text.Json;
-using UserFlowFunctions.ExternalId;
-using UserFlowFunctions.Tests.Fakes;
+using UserFlow.Helpers.ExternalId;
+using UserFlow.Helpers.Tests.Fakes;
 
-namespace UserFlowFunctions.Tests;
+namespace UserFlow.Helpers.Tests;
 
 public class UserFlowExtensionTests
 {

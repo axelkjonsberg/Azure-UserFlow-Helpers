@@ -9,7 +9,7 @@ using System.Text.Json.Serialization;
 using JetBrains.Annotations;
 using Microsoft.Azure.Functions.Worker.Http;
 
-namespace UserFlowFunctions.ExternalId;
+namespace UserFlow.Helpers.ExternalId;
 
 /// <summary>
 /// Helpers for Microsoft Entra External ID custom authentication extensions (Start/Submit).

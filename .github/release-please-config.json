@@ -3,7 +3,7 @@
   "release-type": "simple",
   "packages": {
     ".": {
-      "package-name": "UserFlowHelpers",
+      "package-name": "AxelKjonsberg.AzureUserFlow.Templates",
       "changelog-sections": [
         {
           "type": "feat",
@@ -42,7 +42,7 @@
         }
       ],
       "extra-files": [
-        "UserFlowFunctions/UserFlowFunctions.csproj"
+        "UserFlow.Helpers/UserFlow.Helpers.csproj"
       ]
     }
   }

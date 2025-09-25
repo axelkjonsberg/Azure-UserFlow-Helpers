@@ -2,7 +2,7 @@
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 
-namespace UserFlowFunctions.Tests.Fakes;
+namespace UserFlow.Helpers.Tests.Fakes;
 
 public sealed class TestHttpRequestData(FunctionContext functionContext, Uri url, Stream? body = null) : HttpRequestData(functionContext)
 {
