@@ -59,8 +59,9 @@ jobs:
           dotnet new install "$package_path"
           mkdir -p smoke && cd smoke
           dotnet new b2c-apiconnector -n SmokeTest -o .
-          dotnet restore src/ApiConnector.csproj
-          dotnet build src/ApiConnector.csproj -c Release
+          project_file=$(echo src/*.csproj)
+          dotnet restore "$project_file"
+          dotnet build "$project_file" -c Release
 
       - name: Push to NuGet
         env:
