@@ -2,6 +2,7 @@ using System.Net;
 using System.Text;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
+using Microsoft.Azure.Functions.Worker.Middleware;
 
 public sealed class BasicAuthMiddleware : IFunctionsWorkerMiddleware
 {
