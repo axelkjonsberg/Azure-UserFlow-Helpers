@@ -1,7 +1,7 @@
 using System.Text.Json;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
-using AxelKjonsberg.AzureUserFlow.Helpers.B2C;
+using UserFlow.Helpers.B2C;
 
 public sealed class ApiConnectorFunction
 {
