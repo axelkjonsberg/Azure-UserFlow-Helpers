@@ -26,20 +26,23 @@ jobs:
 
       - name: Resolve latest published UserFlow.Helpers version
         run: |
-          helpers_id="AxelKjonsberg.AzureUserFlow.Helpers"
-          index_url="https://api.nuget.org/v3-flatcontainer/${helpers_id,,}/index.json"
+          helpers_package_id="AxelKjonsberg.AzureUserFlow.Helpers"
+          index_url="https://api.nuget.org/v3-flatcontainer/${helpers_package_id,,}/index.json"
           all_versions=$(curl -sSL "$index_url" | jq -r '.versions')
           stable_version=$(jq -r 'map(select(contains("-")|not)) | last // empty' <<<"$all_versions")
           helpers_version="${stable_version:-$(jq -r 'last' <<<"$all_versions")}"
+          echo "HELPERS_PACKAGE_ID=$helpers_package_id" >> "$GITHUB_ENV"
           echo "HELPERS_VERSION=$helpers_version" >> "$GITHUB_ENV"
 
       - name: Use UserFlow.Helpers package version and ID in the template config
         run: |
-          tpl="templates/UserFlow.Templates/content/ApiConnector/.template.config/template.json"
-          jq --arg id "$helpers_id" --arg v "$helpers_version" \
-          '.symbols.UserFlowHelpersPackageId.defaultValue = $id
-          | .symbols.UserFlowHelpersVersion.defaultValue = $v' \
-          "$tpl" > "$tpl.tmp" && mv "$tpl.tmp" "$tpl"
+          set -euo pipefail
+          template_config_path="templates/UserFlow.Templates/content/ApiConnector/.template.config/template.json"
+          jq --arg id "$HELPERS_PACKAGE_ID" --arg v "$HELPERS_VERSION" \
+            '.symbols.UserFlowHelpersPackageId.defaultValue = $id
+            | .symbols.UserFlowHelpersVersion.defaultValue   = $v' \
+            "$template_config_path" > "$template_config_path.tmp" \
+            && mv "$template_config_path.tmp" "$template_config_path"
 
       - run: dotnet restore
       - run: dotnet build -c Release --no-restore /p:ContinuousIntegrationBuild=true
@@ -52,13 +55,12 @@ jobs:
 
       - name: Smoke test – install template nupkg and build a project
         run: |
-          PKG=$(ls artifacts/*.nupkg | head -n1)
-          dotnet new install "$PKG"
+          package_path=$(ls artifacts/*.nupkg | head -n1)
+          dotnet new install "$package_path"
           mkdir -p smoke && cd smoke
-          dotnet new b2c-apiconnector -n SmokeTest
-          dotnet restore
-          dotnet build -c Release
-        # dotnet new install allows path or NUGET_ID::version
+          dotnet new b2c-apiconnector -n SmokeTest -o .
+          dotnet restore src/ApiConnector.csproj
+          dotnet build src/ApiConnector.csproj -c Release
 
       - name: Push to NuGet
         env:
