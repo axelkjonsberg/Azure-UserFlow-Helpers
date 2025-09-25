@@ -5,7 +5,7 @@ on:
 
 jobs:
   tests:
-    uses: axelkjonsberg/UserFlowFunctions/.github/workflows/tests.yml@main
+    uses: axelkjonsberg/Azure-UserFlow-Helpers/.github/workflows/tests.yml@master
     secrets: inherit
 
   publish:
@@ -24,8 +24,8 @@ jobs:
       - name: Pack (use tag as version)
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          dotnet pack UserFlowFunctions/UserFlowFunctions.csproj -c Release -o ./artifacts \
-            /p:PackageVersion="$VERSION" /p:ContinuousIntegrationBuild=true
+          dotnet pack UserFlowFunctions/UserFlowFunctions.csproj -c Release --no-build -o ./artifacts \
+            -p:PackageVersion="$VERSION" -p:Version="$VERSION" -p:ContinuousIntegrationBuild=true
       - name: Push to NuGet
         env:
           NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}

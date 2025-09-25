@@ -1,9 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <!-- NuGet metadata -->
-        <PackageId>UserFlowFunctions.Templates</PackageId>
+        <PackageId>AxelKjonsberg.AzureUserFlow.Templates</PackageId>
         <Version>0.1.0</Version>
-        <Title>UserFlowFunctions Templates</Title>
+        <Title>AzureUserFlow Templates</Title>
         <Authors>Axel M Kjønsberg</Authors>
         <Description>Templates for using Entra External ID UserFlowExtensions or B2C API Connectors.</Description>
         <PackageTags>dotnet-new;templates;azure-functions</PackageTags>

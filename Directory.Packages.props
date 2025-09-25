@@ -4,7 +4,7 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- Azure Functions .NET isolated worker -->
-    <PackageVersion Include="JetBrains.Annotations" Version="2025.2.2" PrivateAssets="all"/>
+    <PackageVersion Include="JetBrains.Annotations" Version="2025.2.2" />
     <PackageVersion Include="Microsoft.Azure.Functions.Worker" Version="2.0.0" />
     <PackageVersion Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.3.0" />
     <!-- testing -->

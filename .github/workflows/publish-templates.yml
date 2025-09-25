@@ -5,7 +5,7 @@ on:
 
 jobs:
   tests:
-    uses: axelkjonsberg/UserFlowFunctions/.github/workflows/tests.yml@main
+    uses: axelkjonsberg/Azure-UserFlow-Helpers/.github/workflows/tests.yml@master
     secrets: inherit
 
   publish:
@@ -16,16 +16,53 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-dotnet@v4
         with:
           global-json-file: ./global.json
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Resolve latest published UserFlowFunctions version
+        run: |
+          LIB_ID="UserFlowFunctions"
+          INDEX_URL="https://api.nuget.org/v3-flatcontainer/${LIB_ID,,}/index.json"
+          LIB_VER=$(curl -sSL "$INDEX_URL" | jq -r '.versions | map(select(contains("-")|not)) | last')
+          echo "LIB_VER=$LIB_VER"
+          echo "LIB_VER=$LIB_VER" >> $GITHUB_ENV
+        # nuget v3 base address docs: api.nuget.org/v3, flatcontainer index lists versions
+        # https://api.nuget.org/v3/index.json → base resources
+        # https://api.nuget.org/v3-flatcontainer/{id}/index.json lists versions
+
+      - name: Use UserFlowFunctions package version and ID in the template config
+        run: |
+          TPL=templates/UserFlowFunctions.Templates/content/ApiConnector/.template.config/template.json
+          jq --arg v "${LIB_VER}" \
+             --arg id "UserFlowFunctions" \
+             '.symbols.UserFlowFunctionsVersion.defaultValue = $v
+              | .symbols.UserFlowFunctionsPackageId.defaultValue = $id' \
+             "$TPL" > "$TPL.tmp" && mv "$TPL.tmp" "$TPL"
+
       - run: dotnet restore
       - run: dotnet build -c Release --no-restore /p:ContinuousIntegrationBuild=true
-      - name: Pack (use tag as version)
+
+      - name: Pack template (use tag as version)
         run: |
           VERSION="${GITHUB_REF_NAME#templates-v}"
-          dotnet pack templates/UserFlowFunctions.Templates/UserFlowFunctions.Templates.csproj -c Release -o ./artifacts \
-            /p:PackageVersion="$VERSION" /p:ContinuousIntegrationBuild=true
+          dotnet pack templates/UserFlowFunctions.Templates/UserFlowFunctions.Templates.csproj \
+            -c Release -o ./artifacts /p:PackageVersion="$VERSION" /p:ContinuousIntegrationBuild=true
+
+      - name: Smoke test – install template nupkg and build a project
+        run: |
+          PKG=$(ls artifacts/*.nupkg | head -n1)
+          dotnet new install "$PKG"
+          mkdir -p smoke && cd smoke
+          dotnet new b2c-apiconnector -n SmokeTest
+          dotnet restore
+          dotnet build -c Release
+        # dotnet new install allows path or NUGET_ID::version
+
       - name: Push to NuGet
         env:
           NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}

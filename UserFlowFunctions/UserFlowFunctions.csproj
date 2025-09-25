@@ -10,7 +10,7 @@
         <!-- x-release-please-end -->
 
         <!-- NuGet metadata -->
-        <PackageId>UserFlowFunctions</PackageId>
+        <PackageId>AxelKjonsberg.AzureUserFlow.Helpers</PackageId>
         <Description>Helpers for Azure AD B2C API Connectors and Entra External ID user-flow extensions.</Description>
         <Authors>Axel M. Kjønsberg</Authors>
         <PackageTags>azure;azure-functions;azure-ad-b2c;entra-id;ciam;dotnet;serverless</PackageTags>
@@ -21,7 +21,7 @@
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageIcon>icon.png</PackageIcon>
 
-        <!-- SourceLink & deterministic build -->
+        <!-- SourceLink and deterministic build -->
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
         <DebugType>portable</DebugType>
@@ -36,10 +36,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="JetBrains.Annotations" />
+        <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
+        <PackageReference Include="JetBrains.Annotations" PrivateAssets="all" />
         <PackageReference Include="Microsoft.Azure.Functions.Worker" />
         <PackageReference Include="Microsoft.Azure.Functions.Worker.Extensions.Http" />
-        <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
-        <None Include="..\README.md" Pack="true" PackagePath="\" Link="README.md" />
+        <None Include="README.md" Pack="true" PackagePath="\" />
+        <None Include="icon.png" Pack="true" PackagePath="\" />
     </ItemGroup>
 </Project>

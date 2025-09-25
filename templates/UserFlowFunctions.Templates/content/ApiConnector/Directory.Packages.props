@@ -1,0 +1,12 @@
+<Project>
+    <PropertyGroup>
+        <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageVersion Include="Microsoft.Azure.Functions.Worker" Version="2.0.0" />
+        <PackageVersion Include="Microsoft.Azure.Functions.Worker.Extensions.Http" Version="3.3.0" />
+        <PackageVersion Include="Microsoft.Azure.Functions.Worker.Sdk" Version="2.0.5" />
+        <PackageVersion Include="[[UserFlowFunctionsPackageId]]"
+                      Version="[[UserFlowFunctionsVersion]]" />
+    </ItemGroup>
+</Project>

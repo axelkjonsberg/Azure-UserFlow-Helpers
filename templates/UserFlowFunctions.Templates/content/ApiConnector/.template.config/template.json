@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "identity": "UserFlowFunctions.Templates.ApiConnector",
+  "name": "Azure Functions (isolated) – B2C API Connector",
+  "shortName": "b2c-apiconnector",
+  "sourceName": "ApiConnector",
+  "author": "",
+  "classifications": [ "Azure", "Functions", "B2C" ],
+  "preferNameDirectory": true,
+  "tags": {
+    "type": "project",
+    "language": "C#"
+  },
+  "symbols": {
+    "UserFlowFunctionsPackageId": {
+      "type": "parameter",
+      "datatype": "text",
+      "replaces": "[[UserFlowFunctionsPackageId]]",
+      "defaultValue": "UserFlowFunctions",
+      "description": "NuGet package id of the helpers library"
+    },
+    "UserFlowFunctionsVersion": {
+      "type": "parameter",
+      "datatype": "text",
+      "replaces": "[[UserFlowFunctionsVersion]]",
+      "defaultValue": "0.0.0",
+      "description": "Pinned version of the helpers library"
+    }
+  },
+  "primaryOutputs": [
+    { "path": "src/ApiConnector.csproj" }
+  ]
+}
