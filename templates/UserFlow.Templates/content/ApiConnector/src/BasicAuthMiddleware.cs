@@ -59,7 +59,7 @@ public sealed class BasicAuthMiddleware : IFunctionsWorkerMiddleware
         var password = decodedUserAndPassword[(splitIndex + 1)..];
 
         var expectedUser = Environment.GetEnvironmentVariable("BASIC_AUTH__USERNAME");
-        var expectedPass = Environment.GetEnvironmentVariable("BASIC_AUTH__PASSWORD");
+        var expectedPassword = Environment.GetEnvironmentVariable("BASIC_AUTH__PASSWORD");
 
         return !string.IsNullOrEmpty(expectedUser)
             && !string.IsNullOrEmpty(expectedPassword)

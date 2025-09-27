@@ -24,7 +24,7 @@ public sealed class ApiConnectorFunction
         // - Optionally return claims on Continue to prefill/override values.
         //
         // Example below: validate the email claim value
-        string? email = TryGetString(jsonRootElement, Domain.Claims.Email);
+        string? email = TryGetString(jsonRootElement, "email");
 
         if (string.IsNullOrWhiteSpace(email) || !email.Contains("@"))
         {
