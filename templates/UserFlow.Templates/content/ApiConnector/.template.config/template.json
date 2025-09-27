@@ -3,7 +3,7 @@
   "identity": "AxelKjonsberg.AzureUserFlow.Templates.ApiConnector",
   "name": "Azure Functions (isolated) – B2C API Connector",
   "shortName": "b2c-apiconnector",
-  "sourceName": "ApiConnector",
+  "sourceName": "ProjectName",
   "author": "Axel M. Kjønsberg",
   "classifications": [ "Azure", "Functions", "B2C" ],
   "preferNameDirectory": true,
@@ -26,6 +26,6 @@
     }
   },
   "primaryOutputs": [
-    { "path": "src/ApiConnector.csproj" }
+    { "path": "src/ProjectName.csproj" }
   ]
 }

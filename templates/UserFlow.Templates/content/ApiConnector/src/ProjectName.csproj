@@ -5,6 +5,8 @@
     <OutputType>Exe</OutputType>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>ProjectName</RootNamespace>
+    <AssemblyName>ProjectName</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
