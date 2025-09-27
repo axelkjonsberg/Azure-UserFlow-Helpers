@@ -1,5 +1,8 @@
+using System;
+using System.Linq;
 using System.Net;
 using System.Text;
+using System.Threading.Tasks;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Azure.Functions.Worker.Middleware;
@@ -7,40 +10,39 @@ using Microsoft.Azure.Functions.Worker.Middleware;
 public sealed class BasicAuthMiddleware : IFunctionsWorkerMiddleware
 {
     private const string BasicAuthSchemeWithSpace = "Basic ";
-    private const char HeaderSplitChar = ':';
-    public async Task Invoke(FunctionContext context, FunctionExecutionDelegate next)
+    private const char UserPasswordSeparator = ':';
+
+    public async Task Invoke(FunctionContext functionContext, FunctionExecutionDelegate next)
     {
-        // Only apply to HTTP-trigger invocations
-        var request = await context.GetHttpRequestDataAsync();
-        if (request is null)
+        HttpRequestData? httpRequest = await functionContext.GetHttpRequestDataAsync();
+        if (httpRequest is null)
         {
-            await next(context);
+            await next(functionContext);
             return;
         }
 
-        var authHeaderValue = request.Headers.TryGetValues("Authorization", out var headerAuthValues)
-            ? headerAuthValues?.FirstOrDefault()
-            : null;
+        httpRequest.Headers.TryGetValues("Authorization", out var authorizationHeaderValues);
+        string? authorizationHeaderValue = authorizationHeaderValues?.FirstOrDefault();
 
-        if (!IsAuthorized(authHeaderValue))
+        if (!IsAuthorized(authorizationHeaderValue))
         {
-            var unatuhorizedResponse = request.CreateResponse(HttpStatusCode.Unauthorized);
-            unatuhorizedResponse.Headers.Add("WWW-Authenticate", @"Basic realm=""B2C""");
-
-            await unatuhorizedResponse.WriteStringAsync("Unauthorized");
-            context.GetInvocationResult().Value = unatuhorizedResponse;
+            var unauthorizedResponse = httpRequest.CreateResponse(HttpStatusCode.Unauthorized);
+            unauthorizedResponse.Headers.Add("WWW-Authenticate", @"Basic realm=""B2C""");
+            await unauthorizedResponse.WriteStringAsync("Unauthorized");
+            functionContext.GetInvocationResult().Value = unauthorizedResponse;
             return;
         }
 
-        await next(context);
+        await next(functionContext);
     }
 
-    private static bool IsAuthorized(string? headerValue)
+    private static bool IsAuthorized(string? authorizationHeaderValue)
     {
-        if (string.IsNullOrWhiteSpace(header) || !header.StartsWith(BasicAuthSchemeWithSpace, StringComparison.OrdinalIgnoreCase))
+        if (string.IsNullOrWhiteSpace(authorizationHeaderValue) ||
+            !authorizationHeaderValue.StartsWith(BasicAuthSchemeWithSpace, StringComparison.OrdinalIgnoreCase))
             return false;
 
-        var encodedUserAndPassword = header.Substring(BasicAuthSchemeWithSpace.Length).Trim();
+        string encodedUserAndPassword = authorizationHeaderValue.Substring(BasicAuthSchemeWithSpace.Length).Trim();
         string decodedUserAndPassword;
         try
         {
@@ -51,19 +53,18 @@ public sealed class BasicAuthMiddleware : IFunctionsWorkerMiddleware
             return false;
         }
 
-        var splitIndex = decodedUserAndPassword.IndexOf(UserPasswordSplitChar);
-        if (splitIndex < 0)
-            return false;
+        int separatorIndex = decodedUserAndPassword.IndexOf(UserPasswordSeparator);
+        if (separatorIndex < 0) return false;
 
-        var user = decodedUserAndPassword[..splitIndex];
-        var password = decodedUserAndPassword[(splitIndex + 1)..];
+        string providedUsername = decodedUserAndPassword[..separatorIndex];
+        string providedPassword = decodedUserAndPassword[(separatorIndex + 1)..];
 
-        var expectedUser = Environment.GetEnvironmentVariable("BASIC_AUTH__USERNAME");
-        var expectedPassword = Environment.GetEnvironmentVariable("BASIC_AUTH__PASSWORD");
+        string? expectedUsername = Environment.GetEnvironmentVariable("BASIC_AUTH__USERNAME");
+        string? expectedPassword = Environment.GetEnvironmentVariable("BASIC_AUTH__PASSWORD");
 
-        return !string.IsNullOrEmpty(expectedUser)
+        return !string.IsNullOrEmpty(expectedUsername)
             && !string.IsNullOrEmpty(expectedPassword)
-            && string.Equals(user, expectedUser, StringComparison.Ordinal)
-            && string.Equals(password, expectedPassword, StringComparison.Ordinal);
+            && string.Equals(providedUsername, expectedUsername, StringComparison.Ordinal)
+            && string.Equals(providedPassword, expectedPassword, StringComparison.Ordinal);
     }
 }
