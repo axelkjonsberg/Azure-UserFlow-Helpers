@@ -3,10 +3,12 @@ using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using UserFlow.Helpers.B2C;
 
+namespace ProjectName;
+
 public sealed class ApiConnectorFunction
 {
-    public const string FunctionName = "Signup_BeforeCreate";
-    public const string Route = "b2c/signup-before-create";
+    private const string FunctionName = "Signup_BeforeCreate";
+    private const string Route = "b2c/signup-before-create";
 
     [Function(FunctionName)]
     public async Task<HttpResponseData> Run(
@@ -42,15 +44,10 @@ public sealed class ApiConnectorFunction
 
     private static string? TryGetString(JsonElement jsonElement, string name)
     {
-        foreach (var jsonProperty in jsonElement.EnumerateObject())
-        {
-            if (string.Equals(jsonProperty.Name, name, StringComparison.OrdinalIgnoreCase))
-            {
-                return jsonProperty.Value.ValueKind == JsonValueKind.String
-                    ? jsonProperty.Value.GetString()
-                    : jsonProperty.Value.GetRawText();
-            }
-        }
-        return null;
+        return (from jsonProperty in jsonElement.EnumerateObject()
+            where string.Equals(jsonProperty.Name, name, StringComparison.OrdinalIgnoreCase)
+            select jsonProperty.Value.ValueKind == JsonValueKind.String
+                ? jsonProperty.Value.GetString()
+                : jsonProperty.Value.GetRawText()).FirstOrDefault();
     }
 }
