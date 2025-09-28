@@ -54,3 +54,9 @@ dotnet new uninstall AxelKjonsberg.AzureUserFlow.Templates
 ## License
 
 MIT
+
+## Keywords
+
+`Azure AD B2C` · `Microsoft Entra External ID` · `authentication extension` · `user flow` · `API Connector` ·
+`Start` · `Submit` · `ValidationError` · `ShowBlockPage` · `Continue` · `Azure Functions` · `isolated worker` ·
+`ciam`

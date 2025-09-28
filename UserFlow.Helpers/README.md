@@ -2,10 +2,6 @@
 
 Helpers for Microsoft Entra External ID custom authentication extensions and Azure AD B2C API Connectors.
 
-## ⚠️ THIS PACKAGE IS IN PREVIEW STATE; EXPECT IT TO CHANGE
-
----
-
 ## This package helps with:
 
 * **External ID custom authentication extensions**: Produce the documented `data` envelope with `@odata.type` action items for **Start** and **Submit** events.
@@ -13,8 +9,6 @@ Helpers for Microsoft Entra External ID custom authentication extensions and Azu
 
 Use this when you are implementing user-flow extensions (or B2C API connectors) and want to use the exact responses 
 which the Azure Entra ID/B2C endpoints expect.
-
----
 
 ## Typical scenarios
 
@@ -24,8 +18,6 @@ which the Azure Entra ID/B2C endpoints expect.
 * Return field-level validation errors while keeping the page displayed.
 
 (For B2C API Connectors, return the **Continue / ShowBlockPage / ValidationError** payloads and status codes.)
-
----
 
 ## Relevant Entra External ID/AzureAd B2C documentation
 
@@ -38,13 +30,9 @@ which the Azure Entra ID/B2C endpoints expect.
 
     * [https://learn.microsoft.com/azure/active-directory-b2c/add-api-connector](https://learn.microsoft.com/azure/active-directory-b2c/add-api-connector)
 
----
-
 ## License
 
 MIT
-
----
 
 ## Keywords
 
