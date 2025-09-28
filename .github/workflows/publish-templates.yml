@@ -3,11 +3,10 @@ on:
   push:
     tags: [ 'templates-v*.*.*' ]
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'SemVer'
-        required: false
-        type: string
+
+concurrency:
+  group: templates-publish-${{ github.ref_name }}
+  cancel-in-progress: false  # serialize per tag.
 
 jobs:
   tests:
@@ -17,42 +16,42 @@ jobs:
   publish:
     needs: tests
     runs-on: ubuntu-latest
-    if: ${{ (github.ref_type == 'tag' && startsWith(github.ref_name, 'templates-v')) || github.event_name == 'workflow_dispatch' }}
-    permissions:
-      contents: read
-      packages: write
+    timeout-minutes: 25
+    if: ${{ github.event_name == 'push' && github.ref_type == 'tag' && startsWith(github.ref_name, 'templates-v') }}
+    permissions: { contents: read, packages: write }
     steps:
       - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
       - uses: actions/setup-dotnet@v4
-        with:
-          global-json-file: ./global.json
+        with: { global-json-file: ./global.json }
 
       - name: Derive package version
         shell: bash
         run: |
-          if [[ "${{ github.event_name }}" == "push" ]]; then
-            ver="${GITHUB_REF_NAME#templates-v}"
-          else
-            ver="${{ inputs.version }}"
-          fi
-          [[ "$ver" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-.+)?$ ]] || { echo "Bad SemVer: '$ver'"; exit 1; }
-          echo "PACKAGE_VERSION=$ver" >> "$GITHUB_ENV"
+          set -euo pipefail
+          raw="$GITHUB_REF_NAME"                 # e.g., templates-v1.0.0
+          v="${raw#templates-v}"; v="${v#v}"     # drop known prefixes
+          [[ "$v" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z\.]+)?$ ]] || { echo "Bad SemVer: $v"; exit 1; }
+          echo "PACKAGE_VERSION=$v" >> "$GITHUB_ENV"
+          echo "Derived PACKAGE_VERSION=$v"
 
-      - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
-
-      - name: Resolve latest Helpers version
+      - name: Resolve latest Helpers version (stable, else latest)
+        shell: bash
         run: |
-          helpers_package_id="AxelKjonsberg.AzureUserFlow.Helpers"
-          index_url="https://api.nuget.org/v3-flatcontainer/${helpers_package_id,,}/index.json"
-          all_versions=$(curl -sSL "$index_url" | jq -r '.versions')
-          stable=$(jq -r 'map(select(contains("-")|not)) | last // empty' <<<"$all_versions")
-          helpers_version="${stable:-$(jq -r 'last' <<<"$all_versions")}"
-          echo "HELPERS_PACKAGE_ID=$helpers_package_id" >> "$GITHUB_ENV"
+          set -euo pipefail
+          helpers_id="AxelKjonsberg.AzureUserFlow.Helpers"
+          base="https://api.nuget.org/v3-flatcontainer/${helpers_id,,}/index.json"
+          versions=$(curl -fsSL "$base" | jq -r '.versions') # flat container index. :contentReference[oaicite:6]{index=6}
+          stable=$(jq -r 'map(select(contains("-")|not)) | last // empty' <<<"$versions")
+          helpers_version="${stable:-$(jq -r 'last' <<<"$versions")}"
+          echo "HELPERS_PACKAGE_ID=$helpers_id" >> "$GITHUB_ENV"
           echo "HELPERS_VERSION=$helpers_version" >> "$GITHUB_ENV"
 
-      - name: Inject AzureUserFlow.Helpers package ID/version into template.json
+      - name: Inject Helpers ID/version into template.json
+        shell: bash
         run: |
+          set -euo pipefail
           tpl="templates/UserFlow.Templates/content/ApiConnector/.template.config/template.json"
           jq --arg id "$HELPERS_PACKAGE_ID" --arg v "$HELPERS_VERSION" \
              '.symbols.UserFlowHelpersPackageId.defaultValue=$id
@@ -64,20 +63,116 @@ jobs:
 
       - name: Pack
         run: |
+          set -euo pipefail
           dotnet pack templates/UserFlow.Templates/UserFlow.Templates.csproj \
-            -c Release -o ./artifacts /p:PackageVersion="$PACKAGE_VERSION" /p:ContinuousIntegrationBuild=true
+            -c Release -o ./artifacts -p:PackageVersion="$PACKAGE_VERSION" -p:ContinuousIntegrationBuild=true
 
       - name: Smoke test
+        shell: bash
         run: |
+          set -euo pipefail
           pkg=$(ls artifacts/*.nupkg | head -n1)
-          dotnet new install "$pkg"
+          dotnet new uninstall AxelKjonsberg.AzureUserFlow.Templates || true  # clean cache. :contentReference[oaicite:8]{index=8}
+          dotnet new install "$pkg"  # install from path. :contentReference[oaicite:9]{index=9}
           mkdir -p smoke && cd smoke
           dotnet new b2c-apiconnector -n SmokeTest -o .
           proj=$(echo src/*.csproj)
           dotnet restore "$proj"
           dotnet build "$proj" -c Release
 
-      - name: Push to NuGet
+      - name: Push
         env:
           NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
-        run: dotnet nuget push "artifacts/*.nupkg" --api-key "$NUGET_API_KEY" --source "https://api.nuget.org/v3/index.json" --skip-duplicate
+        shell: bash
+        run: |
+          set -euo pipefail
+          for i in {1..5}; do
+            dotnet nuget push "artifacts/*.nupkg" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate && break || sleep $((i*i))
+          done  # --skip-duplicate. :contentReference[oaicite:10]{index=10}
+
+  find-tagged-that-are-not-on-nuget:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      tags: ${{ steps.collect.outputs.tags }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - id: collect
+        shell: bash
+        run: |
+          set -euo pipefail
+          package_id="AxelKjonsberg.AzureUserFlow.Templates"
+          index_url="https://api.nuget.org/v3-flatcontainer/${package_id,,}/index.json"
+          versions_json=$(curl -fsSL "$index_url" || echo '{"versions":[]}')
+          mapfile -t all_tags < <(git tag -l 'templates-v*.*.*' | sort -V)
+          to_publish=()
+          for tag in "${all_tags[@]}"; do
+            v="${tag#templates-v}"
+            jq -e --arg v "$v" '.versions | any(. == $v)' <<<"$versions_json" >/dev/null || to_publish+=("$tag")
+          done
+          printf '%s\n' "${to_publish[@]}" | jq -R . | jq -cs '.' > /tmp/tags.json
+          echo "tags=$(cat /tmp/tags.json)" >> "$GITHUB_OUTPUT"
+
+  publish-tagged-that-are-not-on-nuget:
+    needs: [tests, find-tagged-that-are-not-on-nuget]
+    if: ${{ needs.find-tagged-that-are-not-on-nuget.outputs.tags != '[]' }} # run only when there are tags to publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        tag: ${{ fromJSON(needs.find-tagged-that-are-not-on-nuget.outputs.tags) }}
+    permissions: { contents: read, packages: write }
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ matrix.tag }}
+
+      - name: Set version from tag
+        env:
+          MATRIX_TAG: ${{ matrix.tag }} # e.g., templates-v1.0.0
+        shell: bash
+        run: |
+          set -euo pipefail
+          v="${MATRIX_TAG#templates-v}"; v="${v#v}"
+          echo "PACKAGE_VERSION=$v" >> "$GITHUB_ENV"
+          echo "Derived PACKAGE_VERSION=$v"
+
+      - uses: actions/setup-dotnet@v4
+        with: { global-json-file: ./global.json }
+
+      - name: Resolve latest Helpers version
+        shell: bash
+        run: |
+          set -euo pipefail
+          helpers_id="AxelKjonsberg.AzureUserFlow.Helpers"
+          base="https://api.nuget.org/v3-flatcontainer/${helpers_id,,}/index.json"
+          versions=$(curl -fsSL "$base" | jq -r '.versions')
+          stable=$(jq -r 'map(select(contains("-")|not)) | last // empty' <<<"$versions")
+          helpers_version="${stable:-$(jq -r 'last' <<<"$versions")}"
+          echo "HELPERS_PACKAGE_ID=$helpers_id" >> "$GITHUB_ENV"
+          echo "HELPERS_VERSION=$helpers_version" >> "$GITHUB_ENV"
+
+      - name: Inject Helpers ID/version into template.json
+        run: |
+          tpl="templates/UserFlow.Templates/content/ApiConnector/.template.config/template.json"
+          jq --arg id "$HELPERS_PACKAGE_ID" --arg v "$HELPERS_VERSION" \
+             '.symbols.UserFlowHelpersPackageId.defaultValue=$id
+              | .symbols.UserFlowHelpersVersion.defaultValue=$v' \
+             "$tpl" > "$tpl.tmp" && mv "$tpl.tmp" "$tpl"
+
+      - run: dotnet restore
+      - run: dotnet build -c Release --no-restore /p:ContinuousIntegrationBuild=true
+      - name: Pack
+        run: |
+          dotnet pack templates/UserFlow.Templates/UserFlow.Templates.csproj \
+            -c Release -o ./artifacts /p:PackageVersion="$PACKAGE_VERSION" /p:ContinuousIntegrationBuild=true
+
+      - name: Push
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: dotnet nuget push "artifacts/*.nupkg" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate
