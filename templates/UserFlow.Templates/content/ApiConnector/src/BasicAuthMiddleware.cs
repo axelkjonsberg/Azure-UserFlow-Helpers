@@ -4,8 +4,7 @@ using System.Text;
 using Microsoft.Azure.Functions.Worker;
 using Microsoft.Azure.Functions.Worker.Http;
 using Microsoft.Azure.Functions.Worker.Middleware;
-
-namespace ProjectName;
+using ProjectName;
 
 public sealed class BasicAuthMiddleware : IFunctionsWorkerMiddleware
 {

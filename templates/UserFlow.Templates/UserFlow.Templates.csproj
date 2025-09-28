@@ -17,6 +17,7 @@
         <ContentTargetFolders>content</ContentTargetFolders>
         <NoWarn>$(NoWarn);NU5128</NoWarn>
         <NoDefaultExcludes>true</NoDefaultExcludes>
+        <PackageIcon>icon.png</PackageIcon>
         <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         
@@ -34,10 +35,7 @@
     <ItemGroup>
         <Content Include="content\**\*" Exclude="content\**\bin\**;content\**\obj\**" />
         <Compile Remove="**\*" />
-        <None Include="README.md" Pack="true" PackagePath="" />
-        <None Update="icon.png">
-          <Pack>true</Pack>
-          <PackagePath>\</PackagePath>
-        </None>
+        <None Include="README.md" Pack="true" PackagePath="\" />
+        <None Include="icon.png" Pack="true" PackagePath="\" />
     </ItemGroup>
 </Project>
