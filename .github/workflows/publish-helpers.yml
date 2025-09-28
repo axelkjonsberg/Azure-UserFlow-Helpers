@@ -2,6 +2,7 @@ name: pack-and-publish-helpers-package
 on:
   push:
     tags: [ 'helpers-v*.*.*' ]
+  workflow_dispatch:
 
 jobs:
   tests:
@@ -11,6 +12,7 @@ jobs:
   publish:
     needs: tests
     runs-on: ubuntu-latest
+    if: ${{ github.ref_type == 'tag' && startsWith(github.ref_name, 'helpers-v') }}
     permissions:
       contents: read
       packages: write
@@ -19,16 +21,32 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           global-json-file: ./global.json
+
+      - name: Derive package version from tag
+        shell: bash
+        run: |
+          if [[ "${GITHUB_REF_TYPE}" != "tag" ]]; then
+            echo "This job must run on a tag ref"; exit 1; fi
+          case "${GITHUB_REF_NAME}" in
+            helpers-v*) PACKAGE_VERSION="${GITHUB_REF_NAME#helpers-v}" ;;
+            *) echo "Unexpected tag '${GITHUB_REF_NAME}'"; exit 1 ;;
+          esac
+          [[ "$PACKAGE_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-.+)?$ ]] || { echo "Bad SemVer: $PACKAGE_VERSION"; exit 1; }
+          echo "PACKAGE_VERSION=$PACKAGE_VERSION" >> "$GITHUB_ENV"
+
       - run: dotnet restore
       - run: dotnet build -c Release --no-restore /p:ContinuousIntegrationBuild=true
-      - name: Pack (use tag as version)
+
+      - name: Pack
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
           dotnet pack UserFlow.Helpers/UserFlow.Helpers.csproj -c Release --no-build -o ./artifacts \
-            -p:PackageVersion="$VERSION" -p:Version="$VERSION" -p:ContinuousIntegrationBuild=true
+            -p:PackageVersion="$PACKAGE_VERSION" -p:Version="$PACKAGE_VERSION" -p:ContinuousIntegrationBuild=true
+
       - name: Push to NuGet
         env:
           NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
         run: |
           dotnet nuget push "artifacts/*.nupkg"  --api-key "$NUGET_API_KEY" --source "https://api.nuget.org/v3/index.json" --skip-duplicate
-          dotnet nuget push "artifacts/*.snupkg" --api-key "$NUGET_API_KEY" --source "https://api.nuget.org/v3/index.json" --skip-duplicate
+          shopt -s nullglob; for f in artifacts/*.snupkg; do
+            dotnet nuget push "$f" --api-key "$NUGET_API_KEY" --source "https://api.nuget.org/v3/index.json" --skip-duplicate
+          done
