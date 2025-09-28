@@ -2,6 +2,7 @@ name: pack-and-publish-helpers-package
 on:
   push:
     tags: [ 'helpers-v*.*.*' ]
+  workflow_dispatch:
 
 jobs:
   tests:

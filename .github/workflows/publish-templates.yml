@@ -2,6 +2,7 @@ name: pack-and-publish-templates-package
 on:
   push:
     tags: [ 'templates-v*.*.*' ]
+  workflow_dispatch:
 
 jobs:
   tests:
