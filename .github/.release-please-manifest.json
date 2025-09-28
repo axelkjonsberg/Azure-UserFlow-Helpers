@@ -1,3 +1,4 @@
 {
-  ".": "0.1.0"
+  "UserFlow.Helpers": "0.1.0",
+  "templates/UserFlow.Templates": "0.1.0"
 }

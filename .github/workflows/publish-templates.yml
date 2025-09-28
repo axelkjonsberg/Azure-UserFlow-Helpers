@@ -1,4 +1,4 @@
-name: pack-and-publish-templates
+name: pack-and-publish-templates-package
 on:
   push:
     tags: [ 'templates-v*.*.*' ]

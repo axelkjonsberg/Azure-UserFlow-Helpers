@@ -1,7 +1,6 @@
-namespace ProjectName;
-
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using ProjectName;
 
 var builder = Host.CreateDefaultBuilder(args)
     .ConfigureFunctionsWorkerDefaults(worker =>
