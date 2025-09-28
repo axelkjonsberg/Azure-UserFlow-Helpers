@@ -5,11 +5,11 @@
         <Title>Azure UserFlow Templates</Title>
         <Version>0.1.0</Version>
         <Authors>Axel M Kjønsberg</Authors>
-        <Description>Templates for using Entra External ID UserFlowExtensions or B2C API Connectors.</Description>
+        <Description>Templates for creating User Flow Extensions (Entra External ID) and API Connectors (B2C).</Description>
         <PackageTags>dotnet-new;templates;azure-functions</PackageTags>
         <PackageProjectUrl>https://github.com/axelkjonsberg/Azure-UserFlow-Helpers</PackageProjectUrl>
 
-        <!-- Template package settings -->
+        <!-- package settings (for template-type package) -->
         <PackageType>Template</PackageType>
         <TargetFramework>net8.0</TargetFramework>
         <IncludeContentInPack>true</IncludeContentInPack>

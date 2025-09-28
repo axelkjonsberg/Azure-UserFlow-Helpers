@@ -13,7 +13,7 @@
 
         <!-- NuGet metadata -->
         <PackageId>AxelKjonsberg.AzureUserFlow.Helpers</PackageId>
-        <Description>Helpers for Azure AD B2C API Connectors and Entra External ID user-flow extensions.</Description>
+        <Description>Helpers for User Flow Extensions (Entra External ID) and API Connectors (B2C).</Description>
         <Authors>Axel M. Kjønsberg</Authors>
         <PackageTags>azure;azure-functions;azure-ad-b2c;entra-id;ciam;dotnet;serverless</PackageTags>
         <RepositoryType>git</RepositoryType>
