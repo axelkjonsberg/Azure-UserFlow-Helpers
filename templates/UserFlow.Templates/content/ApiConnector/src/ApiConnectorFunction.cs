@@ -26,9 +26,9 @@ public sealed class ApiConnectorFunction
         // - Optionally return claims on Continue to prefill/override values.
         //
         // Example below: validate the email claim value
-        string? email = TryGetString(jsonRootElement, "email");
+        var email = TryGetString(jsonRootElement, "email");
 
-        if (string.IsNullOrWhiteSpace(email) || !email.Contains("@"))
+        if (string.IsNullOrWhiteSpace(email) || !email.Contains('@'))
         {
             return await ApiConnector.ValidationErrorAsync(req, "Email address is missing or malformed.");
         }

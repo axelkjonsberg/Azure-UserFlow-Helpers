@@ -1,0 +1,36 @@
+﻿name: NuGet push with retries
+description: Push packages with backoff
+inputs:
+  api_key:
+    required: true
+    description: NuGet API key
+  nupkg_glob:
+    required: true
+    description: Glob for .nupkg files
+  snupkg_glob:
+    required: false
+    default: 'artifacts/*.snupkg'
+    description: Glob for .snupkg files
+  source_url:
+    required: false
+    default: 'https://api.nuget.org/v3/index.json'
+    description: NuGet server URL
+  attempts:
+    required: false
+    default: '5'
+    description: Max retry attempts
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        set -euo pipefail
+        for attempt in $(seq 1 ${{ inputs.attempts }}); do
+          dotnet nuget push "${{ inputs.nupkg_glob }}" --api-key "${{ inputs.api_key }}" --source "${{ inputs.source_url }}" --skip-duplicate && break || sleep $((attempt*attempt))
+        done
+        shopt -s nullglob
+        for symbol_package in ${{ inputs.snupkg_glob }}; do
+          for attempt in $(seq 1 ${{ inputs.attempts }}); do
+            dotnet nuget push "$symbol_package" --api-key "${{ inputs.api_key }}" --source "${{ inputs.source_url }}" --skip-duplicate && break || sleep $((attempt*attempt))
+          done
+        done

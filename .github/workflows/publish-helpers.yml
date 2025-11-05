@@ -1,4 +1,5 @@
 name: pack-and-publish-helpers-package
+
 on:
   push:
     tags: [ 'helpers-v*.*.*' ]
@@ -7,6 +8,10 @@ on:
 concurrency:
   group: helpers-publish-${{ github.ref_name }}
   cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash
 
 jobs:
   tests:
@@ -17,97 +22,67 @@ jobs:
     needs: tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    if: ${{ github.event_name == 'push' && github.ref_type == 'tag' && startsWith(github.ref_name, 'helpers-v') }} # tag gate
+    if: ${{ github.event_name == 'push' && github.ref_type == 'tag' && startsWith(github.ref_name, 'helpers-v') }}
     permissions: { contents: read, packages: write }
     steps:
       - uses: actions/checkout@v4
-        with: { fetch-depth: 0 } # required for tags
+        with: { fetch-depth: 0 }
 
       - name: Derive package version from tag
-        shell: bash
-        run: |
-          set -euo pipefail
-          version="${GITHUB_REF_NAME#helpers-v}"
-          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-.+)?$ ]] || { echo "Bad SemVer: $version"; exit 1; }
-          echo "PACKAGE_VERSION=$version" >> "$GITHUB_ENV"
+        id: ver
+        uses: ./.github/actions/derive-version-from-tag
+        with: { tag_prefix: 'helpers-v' }
 
       - name: Skip if version already on NuGet
         id: exists
-        shell: bash
-        run: |
-          set -euo pipefail
-          package_id="AxelKjonsberg.AzureUserFlow.Helpers"
-          index_url="https://api.nuget.org/v3-flatcontainer/${package_id,,}/index.json" # flat container index.
-          if curl -fsSL "$index_url" | jq -e --arg v "$PACKAGE_VERSION" '.versions | any(. == $v)' >/dev/null; then
-            echo "found=true" >> "$GITHUB_OUTPUT"
-            echo "NuGet already has $PACKAGE_VERSION"
-          fi
+        uses: ./.github/actions/nuget-version-exists
+        with:
+          package_id: AxelKjonsberg.AzureUserFlow.Helpers
+          version: ${{ steps.ver.outputs.version }}
 
       - if: ${{ steps.exists.outputs.found != 'true' }}
         run: dotnet restore
       - if: ${{ steps.exists.outputs.found != 'true' }}
         run: dotnet build -c Release --no-restore /p:ContinuousIntegrationBuild=true
+
       - if: ${{ steps.exists.outputs.found != 'true' }}
         name: Pack
         run: |
           set -euo pipefail
           dotnet pack UserFlow.Helpers/UserFlow.Helpers.csproj -c Release --no-build -o ./artifacts \
-            -p:PackageVersion="$PACKAGE_VERSION" -p:Version="$PACKAGE_VERSION" -p:ContinuousIntegrationBuild=true
+            -p:PackageVersion="${{ steps.ver.outputs.version }}" -p:Version="${{ steps.ver.outputs.version }}" -p:ContinuousIntegrationBuild=true
+
       - if: ${{ steps.exists.outputs.found != 'true' }}
-        name: Push
-        env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          # retry with backoff
-          for i in {1..5}; do
-            dotnet nuget push "artifacts/*.nupkg" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate && break || sleep $((i*i))
-          done
-          shopt -s nullglob
-          for f in artifacts/*.snupkg; do
-            for i in {1..5}; do dotnet nuget push "$f" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate && break || sleep $((i*i)); done
-          done
+        name: Push to NuGet
+        uses: ./.github/actions/nuget-push-with-retries
+        with:
+          api_key: ${{ secrets.NUGET_API_KEY }}
+          nupkg_glob: artifacts/*.nupkg
+          snupkg_glob: artifacts/*.snupkg
+
       - if: ${{ steps.exists.outputs.found != 'true' }}
         name: Verify publication appears on NuGet
-        shell: bash
         run: |
           set -euo pipefail
           package_id="AxelKjonsberg.AzureUserFlow.Helpers"
           index_url="https://api.nuget.org/v3-flatcontainer/${package_id,,}/index.json"
           for i in {1..15}; do
-            curl -fsSL "$index_url" | jq -e --arg v "$PACKAGE_VERSION" '.versions | any(. == $v)' && exit 0 || sleep 4
+            curl -fsSL "$index_url" | jq -e --arg v "${{ steps.ver.outputs.version }}" '.versions | any(. == $v)' && exit 0 || sleep 4
           done
           echo "Package not visible on NuGet after wait"; exit 1
 
   find-tagged-that-are-not-on-nuget:
     if: ${{ github.event_name == 'workflow_dispatch' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    outputs:
-      tags: ${{ steps.collect.outputs.tags }}
-    steps:
-      - uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
-      - id: collect
-        shell: bash
-        run: |
-          set -euo pipefail
-          package_id="AxelKjonsberg.AzureUserFlow.Helpers"
-          index_url="https://api.nuget.org/v3-flatcontainer/${package_id,,}/index.json"
-          versions_json=$(curl -fsSL "$index_url" || echo '{"versions":[]}')
-          mapfile -t all_tags < <(git tag -l 'helpers-v*.*.*' | sort -V)
-          to_publish=()
-          for tag in "${all_tags[@]}"; do
-            v="${tag#helpers-v}"
-            jq -e --arg v "$v" '.versions | any(. == $v)' <<<"$versions_json" >/dev/null || to_publish+=("$tag")
-          done
-          printf '%s\n' "${to_publish[@]}" | jq -R . | jq -cs '.' > /tmp/tags.json
-          echo "tags=$(cat /tmp/tags.json)" >> "$GITHUB_OUTPUT"
+    uses: ./.github/workflows/discover-unpublished-tags.yml
+    with:
+      package_id: AxelKjonsberg.AzureUserFlow.Helpers
+      tag_glob: 'helpers-v*.*.*'
+      tag_prefix: 'helpers-v'
+    secrets: inherit
 
   publish-tagged-that-are-not-on-nuget:
     needs: [tests, find-tagged-that-are-not-on-nuget]
-    if: ${{ needs.find-tagged-that-are-not-on-nuget.outputs.tags != '[]' }} # run only when there are tags to publish
+    if: ${{ needs.find-tagged-that-are-not-on-nuget.outputs.tags != '[]' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
@@ -120,14 +95,12 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ matrix.tag }}
-
       - name: Set version from tag
-        env:
-          MATRIX_TAG: ${{ matrix.tag }}
-        shell: bash
         run: |
           set -euo pipefail
-          echo "PACKAGE_VERSION=${MATRIX_TAG#helpers-v}" >> "$GITHUB_ENV"
+          tag_name="${{ matrix.tag }}"
+          package_version="${tag_name#helpers-v}"; package_version="${package_version#v}"
+          echo "PACKAGE_VERSION=$package_version" >> "$GITHUB_ENV"
 
       - run: dotnet restore
       - run: dotnet build -c Release --no-restore /p:ContinuousIntegrationBuild=true
@@ -135,16 +108,9 @@ jobs:
         run: |
           dotnet pack UserFlow.Helpers/UserFlow.Helpers.csproj -c Release --no-build -o ./artifacts \
             -p:PackageVersion="$PACKAGE_VERSION" -p:Version="$PACKAGE_VERSION" -p:ContinuousIntegrationBuild=true
-      - name: Push
-        env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          for i in {1..5}; do
-            dotnet nuget push "artifacts/*.nupkg" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate && break || sleep $((i*i))
-          done
-          shopt -s nullglob
-          for f in artifacts/*.snupkg; do
-            for i in {1..5}; do dotnet nuget push "$f" --api-key "$NUGET_API_KEY" --source https://api.nuget.org/v3/index.json --skip-duplicate && break || sleep $((i*i)); done
-          done
+      - name: Push to NuGet
+        uses: ./.github/actions/nuget-push-with-retries
+        with:
+          api_key: ${{ secrets.NUGET_API_KEY }}
+          nupkg_glob: artifacts/*.nupkg
+          snupkg_glob: artifacts/*.snupkg

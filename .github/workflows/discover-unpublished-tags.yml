@@ -1,0 +1,43 @@
+﻿name: discover-unpublished-tags
+
+on:
+  workflow_call:
+    inputs:
+      package_id:
+        type: string
+        required: true
+      tag_glob:
+        type: string
+        required: true
+      tag_prefix:
+        type: string
+        required: true
+    outputs:
+      tags:
+        description: JSON array of tags not on NuGet
+        value: ${{ jobs.find.outputs.tags }}
+
+jobs:
+  find:
+    runs-on: ubuntu-latest
+    outputs:
+      tags: ${{ steps.collect.outputs.tags }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - id: collect
+        shell: bash
+        run: |
+          set -euo pipefail
+          package_id="${{ inputs.package_id }}"
+          package_id_lc="${package_id,,}"
+          index_url="https://api.nuget.org/v3-flatcontainer/${package_id_lc}/index.json"
+          versions_json=$(curl -fsSL "$index_url" || echo '{"versions":[]}')
+          mapfile -t all_tags < <(git tag -l '${{ inputs.tag_glob }}' | sort -V)
+          to_publish=()
+          for tag in "${all_tags[@]}"; do
+            version="${tag#${{ inputs.tag_prefix }}}"
+            jq -e --arg v "$version" '.versions | any(. == $v)' <<<"$versions_json" >/dev/null || to_publish+=("$tag")
+          done
+          printf '%s\n' "${to_publish[@]}" | jq -R . | jq -cs '.' > /tmp/tags.json
+          echo "tags=$(cat /tmp/tags.json)" >> "$GITHUB_OUTPUT"

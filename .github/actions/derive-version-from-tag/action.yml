@@ -1,0 +1,25 @@
+﻿name: Derive version from tag
+description: Strip prefix and validate SemVer
+inputs:
+  tag_prefix:
+    required: true
+    description: Tag prefix to remove (e.g. helpers-v)
+  semver_pattern:
+    required: false
+    default: '^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z\.]+)?$'
+    description: Regex to validate the version
+outputs:
+  version:
+    description: Derived SemVer
+    value: ${{ steps.derive.outputs.version }}
+runs:
+  using: composite
+  steps:
+    - id: derive
+      shell: bash
+      run: |
+        set -euo pipefail
+        raw_ref_name="$GITHUB_REF_NAME"
+        derived_version="${raw_ref_name#${{ inputs.tag_prefix }}}"; derived_version="${derived_version#v}"
+        [[ "$derived_version" =~ ${{ inputs.semver_pattern }} ]] || { echo "Bad SemVer: $derived_version"; exit 1; }
+        echo "version=$derived_version" >> "$GITHUB_OUTPUT"

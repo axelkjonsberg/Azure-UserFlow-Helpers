@@ -1,0 +1,28 @@
+﻿name: NuGet version exists
+description: Check if version is on NuGet
+inputs:
+  package_id:
+    required: true
+    description: Package ID on NuGet
+  version:
+    required: true
+    description: Version to check
+outputs:
+  found:
+    description: true if version exists
+    value: ${{ steps.chk.outputs.found }}
+runs:
+  using: composite
+  steps:
+    - id: chk
+      shell: bash
+      run: |
+        set -euo pipefail
+        package_id="${{ inputs.package_id }}"
+        package_id_lower="${package_id,,}"
+        index_url="https://api.nuget.org/v3-flatcontainer/${package_id_lower}/index.json"
+        if curl -fsSL "$index_url" | jq -e --arg v "${{ inputs.version }}" '.versions | any(. == $v)' >/dev/null; then
+          echo "found=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "found=false" >> "$GITHUB_OUTPUT"
+        fi
